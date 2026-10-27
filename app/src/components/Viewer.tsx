@@ -290,11 +290,33 @@ export function Viewer({ proto }: { proto: Prototype }) {
     />
   );
 
-  if (mode === "full") {
-    return (
-      <div className="pv-full">
-        {iframe}
-        {panel}
+  // One tree for both modes. A live prototype's frame holds every change
+  // made since it loaded, and none of it is in frame.src — so the iframe
+  // must never remount on a mode switch, or it reloads to its first state.
+  // Every node above it keeps its type and position in both modes (the
+  // `&&` slots hold their place when false); CSS does the rearranging.
+  const full = mode === "full";
+  return (
+    <div className={`pv-viewer${full ? " pv-viewer--full" : ""}`}>
+      {!full && (
+        <TopBar
+          proto={proto}
+          view="view"
+          viewHref={view}
+          galleryHref={gallery}
+          mode={{ value: mode, onChange: setMode }}
+          panelOpen={panelOpen}
+          onTogglePanel={() => setPanelOpen(!panelOpen)}
+          onReset={reset}
+          resetTitle={resetTitle}
+        />
+      )}
+      <div className="pv-workspace">
+        {panelVariant === "docked" && panel}
+        <PhoneStage full={full}>{iframe}</PhoneStage>
+      </div>
+      {panelVariant !== "docked" && panel}
+      {full && (
         <div className={`pv-pill${awake || drawerOpen ? "" : " is-asleep"}`} onPointerEnter={() => wake.current()}>
           <button type="button" className="pv-pill__btn" onClick={() => navigate("/prototypes")} title="All prototypes">
             <ArrowLeft />
@@ -313,46 +335,31 @@ export function Viewer({ proto }: { proto: Prototype }) {
             <span>Exit full screen</span>
           </button>
         </div>
-        {toastNode}
-      </div>
-    );
-  }
-
-  return (
-    <div className="pv-viewer">
-      <TopBar
-        proto={proto}
-        view="view"
-        viewHref={view}
-        galleryHref={gallery}
-        mode={{ value: mode, onChange: setMode }}
-        panelOpen={panelOpen}
-        onTogglePanel={() => setPanelOpen(!panelOpen)}
-        onReset={reset}
-        resetTitle={resetTitle}
-      />
-      <div className="pv-workspace">
-        {panelVariant === "docked" && panel}
-        <PhoneStage>{iframe}</PhoneStage>
-      </div>
-      {panelVariant === "sheet" && panel}
+      )}
       {toastNode}
     </div>
   );
 }
 
-/** Centres a 390×844 phone in the space left, shrinking it (never growing) to fit. */
-function PhoneStage({ children }: { children: React.ReactNode }) {
+/**
+ * Centres a 390×844 phone in the space left, shrinking it (never growing) to
+ * fit. In full screen the same nodes stay put and just stop being a phone —
+ * see the note on the Viewer's return for why they can't be swapped out.
+ */
+function PhoneStage({ full, children }: { full: boolean; children: React.ReactNode }) {
   const [ref, { width, height }] = useElementSize<HTMLDivElement>();
   const { width: vw, height: vh } = VIEWPORTS.phone;
   const outerW = vw + PHONE_BEZEL * 2;
   const outerH = vh + PHONE_BEZEL * 2;
   const scale = width && height ? Math.min(1, (height - STAGE_PAD * 2) / outerH, (width - STAGE_PAD * 2) / outerW) : 1;
   return (
-    <div ref={ref} className="pv-stage">
+    <div ref={ref} className={`pv-stage${full ? " pv-stage--full" : ""}`}>
       {/* The layout box is the scaled size, so centring works on what's seen. */}
-      <div style={{ width: outerW * scale, height: outerH * scale }}>
-        <div className="pv-phone" style={{ width: outerW, height: outerH, padding: PHONE_BEZEL, transform: `scale(${scale})` }}>
+      <div className="pv-stage__box" style={full ? undefined : { width: outerW * scale, height: outerH * scale }}>
+        <div
+          className={`pv-phone${full ? " pv-phone--full" : ""}`}
+          style={full ? undefined : { width: outerW, height: outerH, padding: PHONE_BEZEL, transform: `scale(${scale})` }}
+        >
           <div className="pv-phone__screen">{children}</div>
         </div>
       </div>

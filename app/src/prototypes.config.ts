@@ -52,10 +52,99 @@ const prototypes: Prototype[] = [
     updated: "2026-08-19T12:46:33-04:00",
     entry: "https://lattice2026.micahburger.com/",
     device: "desktop",
-    // The intro's "seen" flag (app.js). Cross-origin, so Reset can only clear
-    // it once Lattice loads the helper.
+    // The intro's "seen" flag (app.js), cleared through the helper on Reset.
     storageKeys: ["latticeIntroSeen"],
-    screens: [{ id: "explorer", title: "Explorer", path: "/" }],
+    // js/protostate-adapter.js in ../lattice-site maps these onto Lattice's
+    // own `state` without a reload. Option ids are Lattice's own values
+    // (data.js), first one being its default.
+    liveStates: true,
+    states: [
+      {
+        id: "typography",
+        label: "Type",
+        options: [
+          { id: "editorial", label: "Editorial" },
+          { id: "contemporary", label: "Contemporary" },
+          { id: "fashion", label: "Fashion" },
+          { id: "luxury", label: "Luxury" },
+          { id: "mono", label: "Mono" },
+        ],
+      },
+      {
+        id: "colorStory",
+        label: "Color",
+        options: [
+          { id: "museum", label: "Museum Paper" },
+          { id: "graphite", label: "Graphite Night" },
+          { id: "signal", label: "Signal Red" },
+          { id: "forest", label: "Deep Forest" },
+          { id: "electric", label: "Electric Blue" },
+          { id: "midnight", label: "Midnight" },
+          { id: "clay", label: "Soft Clay" },
+        ],
+      },
+      {
+        id: "layout",
+        label: "Layout",
+        options: [
+          { id: "magazine", label: "Magazine" },
+          { id: "minimal", label: "Minimal" },
+          { id: "grid", label: "Grid" },
+          { id: "feature", label: "Feature" },
+        ],
+      },
+      {
+        id: "spacing",
+        label: "Spacing",
+        options: [
+          { id: "generous", label: "Generous" },
+          { id: "compact", label: "Compact" },
+          { id: "rhythmic", label: "Rhythmic" },
+        ],
+      },
+      {
+        id: "contentFocus",
+        label: "Content",
+        options: [
+          { id: "editorial", label: "Editorial" },
+          { id: "portfolio", label: "Portfolio" },
+          { id: "brand", label: "Brand" },
+          { id: "product", label: "Product" },
+        ],
+      },
+      {
+        id: "sidebar",
+        label: "Sidebar",
+        options: [
+          { id: "closed", label: "Closed" },
+          { id: "controls", label: "Design controls" },
+          { id: "guide", label: "Creative guide" },
+        ],
+      },
+      {
+        // "Like a real visit" honours the stored flag; the other two override
+        // it without writing it, so the gallery can hide the intro for good.
+        id: "intro",
+        label: "Intro",
+        options: [
+          { id: "stored", label: "Like a real visit" },
+          { id: "show", label: "Always show" },
+          { id: "hide", label: "Never show" },
+        ],
+      },
+    ],
+    // One page, so every screen is the same path with a different preset.
+    // The gallery cards hide the intro, or every one would open behind it.
+    screens: [
+      { id: "explorer", title: "Explorer", path: "/" },
+      { id: "intro", title: "First-visit intro", path: "/", preset: { intro: "show" } },
+      { id: "controls", title: "Design controls open", path: "/", section: "Sidebar", preset: { sidebar: "controls", intro: "hide" } },
+      { id: "guide", title: "Creative guide open", path: "/", section: "Sidebar", preset: { sidebar: "guide", intro: "hide" } },
+      { id: "graphite-luxury", title: "Graphite Night, luxury feature", path: "/", section: "Mixes", preset: { colorStory: "graphite", typography: "luxury", layout: "feature", intro: "hide" } },
+      { id: "signal-grid", title: "Signal Red, contemporary grid", path: "/", section: "Mixes", preset: { colorStory: "signal", typography: "contemporary", layout: "grid", spacing: "compact", intro: "hide" } },
+      { id: "forest-portfolio", title: "Deep Forest, fashion portfolio", path: "/", section: "Mixes", preset: { colorStory: "forest", typography: "fashion", layout: "minimal", contentFocus: "portfolio", intro: "hide" } },
+      { id: "clay-product", title: "Soft Clay, product", path: "/", section: "Mixes", preset: { colorStory: "clay", contentFocus: "product", spacing: "rhythmic", intro: "hide" } },
+    ],
   },
   {
     slug: "design-system",
