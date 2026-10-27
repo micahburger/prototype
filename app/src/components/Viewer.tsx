@@ -3,6 +3,7 @@ import type { Action, Prototype, Selections } from "../types";
 import {
   VIEWPORTS,
   allGroups,
+  deviceOf,
   frameSrc,
   fullState,
   galleryHref,
@@ -44,7 +45,15 @@ export function Viewer({ proto }: { proto: Prototype }) {
   const sameOrigin = isSameOrigin(proto);
 
   const modeParam = params.get("mode");
-  const mode: ViewerMode = modeParam === "full" || modeParam === "phone" ? modeParam : isPhoneWindow ? "full" : "phone";
+  // With no mode in the URL, open at the prototype's own size: a desktop
+  // site in a phone frame is a squeeze you'd switch out of every time. A
+  // phone-sized window is full screen regardless — there's no room for a frame.
+  const mode: ViewerMode =
+    modeParam === "full" || modeParam === "phone"
+      ? modeParam
+      : isPhoneWindow || deviceOf(proto) === "desktop"
+        ? "full"
+        : "phone";
   const selections = normalize(proto, readSelections(params));
   const selKey = stableKey(selections);
   const entryScreen = matchScreen(proto, proto.entry) ?? proto.screens[0];
@@ -222,7 +231,9 @@ export function Viewer({ proto }: { proto: Prototype }) {
     { title: "Whole prototype", groups: proto.states ?? [], actions: proto.actions ?? [] },
   ];
 
-  const panel = (
+  // A prototype with nothing to control gets no States button, pill button,
+  // shortcut or panel at all — an empty drawer that says so is just noise.
+  const panel = hasAnyStates && (
     <ControlsPanel
       variant={panelVariant}
       open={panelOpen}
@@ -232,7 +243,7 @@ export function Viewer({ proto }: { proto: Prototype }) {
       onSelect={setSelection}
       onAction={fireAction}
       onResetStates={resetStates}
-      emptyNote={hasAnyStates ? "This screen has no states of its own." : "No states declared for this prototype yet."}
+      emptyNote="This screen has no states of its own."
     />
   );
 
@@ -248,7 +259,7 @@ export function Viewer({ proto }: { proto: Prototype }) {
   useShortcuts({
     g: () => navigate(gallery),
     f: () => setMode(mode === "full" ? "phone" : "full"),
-    s: () => setPanelOpen(!panelOpen),
+    ...(hasAnyStates && { s: () => setPanelOpen(!panelOpen) }),
     r: reset,
     Escape: () => {
       if (panelVariant !== "docked" && drawerOpen) setDrawerOpen(false);
@@ -306,7 +317,7 @@ export function Viewer({ proto }: { proto: Prototype }) {
           galleryHref={gallery}
           mode={{ value: mode, onChange: setMode }}
           panelOpen={panelOpen}
-          onTogglePanel={() => setPanelOpen(!panelOpen)}
+          onTogglePanel={hasAnyStates ? () => setPanelOpen(!panelOpen) : undefined}
           onReset={reset}
           resetTitle={resetTitle}
         />
@@ -322,10 +333,12 @@ export function Viewer({ proto }: { proto: Prototype }) {
             <ArrowLeft />
             <span>Back</span>
           </button>
-          <button type="button" className="pv-pill__btn" aria-pressed={drawerOpen} onClick={() => setPanelOpen(!panelOpen)} title="Controls (S)">
-            <Sliders />
-            <span>States</span>
-          </button>
+          {hasAnyStates && (
+            <button type="button" className="pv-pill__btn" aria-pressed={drawerOpen} onClick={() => setPanelOpen(!panelOpen)} title="Controls (S)">
+              <Sliders />
+              <span>States</span>
+            </button>
+          )}
           <button type="button" className="pv-pill__btn" onClick={reset} title={resetTitle}>
             <ResetIcon />
             <span>Reset</span>

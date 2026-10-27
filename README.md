@@ -23,6 +23,11 @@ Shortcuts: **G** View/Gallery · **F** full screen · **S** controls · **R** re
 viewer's own chrome. Once you've clicked into a prototype, its frame has the
 keyboard.
 
+With no `mode` in the URL, the viewer opens at the prototype's `device`: a
+phone frame for phone prototypes, full screen for desktop ones. The States
+button, panel and **S** shortcut only appear for prototypes that declare
+states or actions.
+
 ## Adding a prototype
 
 Add one entry to [`app/src/prototypes.config.ts`](app/src/prototypes.config.ts).

@@ -11,7 +11,8 @@ interface TopBarProps {
   /** Viewer only: the Phone | Full screen toggle. */
   mode?: { value: "phone" | "full"; onChange: (mode: "phone" | "full") => void };
   panelOpen: boolean;
-  onTogglePanel: () => void;
+  /** Omitted when there's nothing to control: no States button at all. */
+  onTogglePanel?: () => void;
   onReset?: () => void;
   resetTitle?: string;
 }
@@ -51,16 +52,18 @@ export function TopBar({ proto, view, viewHref, galleryHref, mode, panelOpen, on
             ]}
           />
         )}
-        <button
-          type="button"
-          className="pv-btn"
-          aria-pressed={panelOpen}
-          onClick={onTogglePanel}
-          title="Controls (S)"
-        >
-          <Sliders />
-          States
-        </button>
+        {onTogglePanel && (
+          <button
+            type="button"
+            className="pv-btn"
+            aria-pressed={panelOpen}
+            onClick={onTogglePanel}
+            title="Controls (S)"
+          >
+            <Sliders />
+            States
+          </button>
+        )}
         {onReset && (
           <button type="button" className="pv-btn" onClick={onReset} title={resetTitle}>
             <ResetIcon />

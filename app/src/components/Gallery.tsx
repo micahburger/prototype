@@ -44,6 +44,9 @@ export function Gallery({ proto }: { proto: Prototype }) {
   const size: Size = sizeParam === "s" || sizeParam === "m" || sizeParam === "l" ? sizeParam : saved.size ?? "m";
 
   const globalIds = new Set((proto.states ?? []).map((g) => g.id));
+  // Only prototype-wide groups apply across cards, so with none there's
+  // nothing for a panel here to do (same rule as the viewer).
+  const hasGlobals = globalIds.size > 0;
   const globals = Object.fromEntries(
     Object.entries(normalize(proto, readSelections(params))).filter(([g]) => globalIds.has(g)),
   );
@@ -65,7 +68,7 @@ export function Gallery({ proto }: { proto: Prototype }) {
   const view = viewerHref(proto.slug, { selections: globals });
   useShortcuts({
     g: () => navigate(view),
-    s: () => setPanelOpen(!panelOpen),
+    ...(hasGlobals && { s: () => setPanelOpen(!panelOpen) }),
     Escape: () => isPhoneWindow && setPanelOpen(false),
   });
 
@@ -91,10 +94,10 @@ export function Gallery({ proto }: { proto: Prototype }) {
         viewHref={view}
         galleryHref={galleryHref(proto.slug, { selections: globals })}
         panelOpen={panelOpen}
-        onTogglePanel={() => setPanelOpen(!panelOpen)}
+        onTogglePanel={hasGlobals ? () => setPanelOpen(!panelOpen) : undefined}
       />
       <div className="pv-workspace">
-        {!isPhoneWindow && (
+        {hasGlobals && !isPhoneWindow && (
           <ControlsPanel
             variant="docked"
             open={panelOpen}
@@ -184,7 +187,7 @@ export function Gallery({ proto }: { proto: Prototype }) {
           ))}
         </main>
       </div>
-      {isPhoneWindow && (
+      {hasGlobals && isPhoneWindow && (
         <ControlsPanel
           variant="sheet"
           open={panelOpen}
