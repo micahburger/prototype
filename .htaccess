@@ -1,0 +1,20 @@
+# SPA fallback for client-side routing (the viewer uses
+# history.pushState (see src/lib/router.ts), not a file-based router.
+# Hostinger serves this repo's root over Apache/LiteSpeed, which has no
+# knowledge of app routes like /prototypes/lattice/gallery — without
+# this, a direct load or refresh on one of those returns a real 404 instead
+# of the SPA shell.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Real files and directories (JS, CSS, images, fonts, etc.) resolve as-is.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Everything else falls back to the SPA shell so the client router can
+  # take over — an internal rewrite, not a redirect, so the URL bar (and
+  # therefore window.location.pathname) is untouched.
+  RewriteRule ^ index.html [L]
+</IfModule>

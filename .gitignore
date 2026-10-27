@@ -1,0 +1,7 @@
+.DS_Store
+.claude/
+app/node_modules/
+app/dist/
+app/*.tsbuildinfo
+app/vite.config.js
+app/vite.config.d.ts

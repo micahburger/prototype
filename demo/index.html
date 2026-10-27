@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>State helper demo</title>
+<!--
+  A deliberately small prototype that uses every part of protostate.js, so the
+  viewer has something to prove itself against and so there's a worked example
+  to copy. Two screens behind hash routes (#applications, #decision), three
+  state groups, two actions, and data in localStorage under "demo:".
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; background: #f4f1ec; color: #1f1d1a; min-height: 100vh; }
+  header { padding: 20px 20px 12px; background: #2f5d50; color: #f4f1ec; }
+  header small { opacity: .7; display: block; margin-bottom: 4px; }
+  header h1 { font-size: 24px; font-weight: 600; }
+  nav { display: flex; gap: 6px; padding: 12px 20px; }
+  nav a { flex: 1; text-align: center; padding: 8px; border-radius: 999px; color: inherit; text-decoration: none; background: #e6e1d8; }
+  nav a[aria-current] { background: #1f1d1a; color: #f4f1ec; }
+  main { padding: 8px 20px 40px; display: grid; gap: 10px; }
+  .card { background: #fff; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .card b { display: block; }
+  .muted { color: #6f685e; font-size: 13px; }
+  .empty { text-align: center; padding: 48px 12px; color: #6f685e; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #e6e1d8; margin-top: 6px; }
+  .new { background: #d9ecd8; color: #23502b; }
+  .big { font-size: 40px; text-align: center; padding: 28px 0 8px; }
+  .approved { background: #dcefe3; } .declined { background: #f6dfda; } .error { background: #fff3d6; }
+</style>
+</head>
+<body>
+<header>
+  <small id="viewer"></small>
+  <h1 id="title"></h1>
+</header>
+<nav>
+  <a href="#applications">Applications</a>
+  <a href="#decision">Decision</a>
+</nav>
+<main id="main"></main>
+
+<script src="../helper/protostate.js"></script>
+<script>
+  var ps = window.protostate;
+  var VIEWERS = { agent: "Signed in as Sarah, agent", landlord: "Signed in as Dev, landlord", renter: "Signed in as Kai, renter" };
+
+  // Persisted data, so Reset has something real to clear.
+  function load(key, fallback) {
+    try { var v = localStorage.getItem("demo:" + key); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; }
+  }
+  function store(key, value) { localStorage.setItem("demo:" + key, JSON.stringify(value)); }
+
+  var day = load("day", 1);
+  var added = load("added", 0);
+
+  ps.onAction("jump-five-days", function () { day += 5; store("day", day); render(); });
+  ps.onAction("add-application", function () { added += 1; store("added", added); render(); });
+  ps.onReset(function () { day = 1; added = 0; });
+  ps.onStateChange(render);
+  window.addEventListener("hashchange", render);
+
+  function route() { return location.hash === "#decision" ? "decision" : "applications"; }
+
+  function render() {
+    var screen = route();
+    ps.reportScreen(screen);
+    document.getElementById("viewer").textContent = VIEWERS[ps.getState("viewer", "agent")] + " · Day " + day;
+    document.querySelectorAll("nav a").forEach(function (a) {
+      if (a.getAttribute("href") === "#" + screen) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    var main = document.getElementById("main");
+    if (screen === "applications") {
+      document.getElementById("title").textContent = "Applications";
+      var stage = ps.getState("stage", "some");
+      var rows = [];
+      if (stage === "just-invited") rows.push(["Maya Chen", "Invited moments ago", "new"]);
+      if (stage !== "empty") rows.push(["Jordan Ruiz", "Income verified · 3 days ago"], ["Priya Shah", "Waiting on references · 5 days ago"]);
+      for (var i = 0; i < added; i++) rows.push(["New applicant " + (i + 1), "Added by action"]);
+      main.innerHTML = rows.length
+        ? rows.map(function (r) { return '<div class="card"><b>' + r[0] + '</b><span class="muted">' + r[1] + '</span>' + (r[2] ? '<br><span class="pill new">Just invited</span>' : "") + "</div>"; }).join("")
+        : '<div class="empty">No applications yet.<br>Invite a renter to get started.</div>';
+    } else {
+      document.getElementById("title").textContent = "Decision";
+      var outcome = ps.getState("outcome", "pending");
+      var copy = {
+        pending: ["⏳", "Waiting on the landlord", ""],
+        approved: ["✓", "Approved — lease is on its way", "approved"],
+        declined: ["✕", "Declined — the renter has been told", "declined"],
+        error: ["!", "Couldn't load this decision. Pull to retry.", "error"],
+      }[outcome];
+      main.innerHTML = '<div class="card ' + copy[2] + '"><div class="big">' + copy[0] + '</div><b style="text-align:center">' + copy[1] + "</b></div>";
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>
