@@ -1,5 +1,7 @@
 # prototypes
 
+**Read [NOTES.md](NOTES.md) first** — hosting, DNS and the Corner Bodega plan, each fact marked verified or not.
+
 Micah Lindenberger's personal prototype viewer: an index, a viewer (phone
 frame / full screen) with a states panel, and a per-prototype gallery. Vite +
 React 18 + TypeScript, no other runtime dependencies. The README explains the

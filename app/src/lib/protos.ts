@@ -6,6 +6,34 @@ export const VIEWPORTS: Record<Device, { width: number; height: number }> = {
   desktop: { width: 1440, height: 900 },
 };
 
+/**
+ * The three widths every page is reviewed at. Each one is a real viewport:
+ * a frame is laid out at this size and then scaled, never squeezed, so the
+ * prototype runs the breakpoint it would on that device.
+ */
+export const WIDTHS = [390, 768, 1440] as const;
+export type Width = (typeof WIDTHS)[number];
+
+export const WIDTH_VIEWPORTS: Record<Width, { width: number; height: number }> = {
+  390: VIEWPORTS.phone,
+  768: { width: 768, height: 1024 },
+  1440: VIEWPORTS.desktop,
+};
+
+export const WIDTH_NAMES: Record<Width, string> = { 390: "Mobile", 768: "Tablet", 1440: "Desktop" };
+
+export function parseWidth(value: string | null | undefined): Width | undefined {
+  const n = Number(value);
+  return (WIDTHS as readonly number[]).includes(n) ? (n as Width) : undefined;
+}
+
+export const widthOfDevice = (device: Device): Width => (device === "phone" ? 390 : 1440);
+
+/** "1440px · shown at 25%" — every scaled preview says what it really is. */
+export function scaleLabel(width: number, scale: number) {
+  return `${width}px · shown at ${Math.round(scale * 100)}%`;
+}
+
 const PARAM = "state.";
 
 export const prototypes = [...manifest].sort(
@@ -128,7 +156,24 @@ export function screenById(proto: Prototype, id: string | null | undefined) {
   return id ? proto.screens.find((s) => s.id === id) : undefined;
 }
 
-export type ViewerMode = "phone" | "full";
+/**
+ * The viewer's frame modes. phone / tablet / desktop lay the frame out at
+ * 390 / 768 / 1440 and scale it to fit; full hands it the whole window.
+ * "phone" and "full" predate the other two and old links still use them.
+ */
+export type ViewerMode = "phone" | "tablet" | "desktop" | "full";
+export const FRAME_MODES = ["phone", "tablet", "desktop"] as const;
+export type FrameMode = (typeof FRAME_MODES)[number];
+
+export const MODE_WIDTH: Record<FrameMode, Width> = { phone: 390, tablet: 768, desktop: 1440 };
+export const WIDTH_MODE: Record<Width, FrameMode> = { 390: "phone", 768: "tablet", 1440: "desktop" };
+
+export function parseMode(value: string | null): ViewerMode | undefined {
+  return value === "full" || (FRAME_MODES as readonly string[]).includes(value ?? "") ? (value as ViewerMode) : undefined;
+}
+
+/** The framed mode a prototype opens at, and returns to from full screen. */
+export const homeMode = (proto: Prototype): FrameMode => (deviceOf(proto) === "phone" ? "phone" : "desktop");
 export type Size = "s" | "m" | "l";
 
 export function viewerHref(
@@ -143,12 +188,20 @@ export function viewerHref(
   return `/prototypes/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`;
 }
 
+export type BoardView = "pages" | "widths";
+
+/**
+ * The review board. `device=phone|desktop` from before it had three widths
+ * is still read (as 390 / 1440) but never written.
+ */
 export function galleryHref(
   slug: string,
-  opts: { device?: Device; size?: Size; selections?: Selections } = {},
+  opts: { board?: BoardView; screen?: string; width?: Width; size?: Size; selections?: Selections } = {},
 ) {
   const params = new URLSearchParams();
-  if (opts.device) params.set("device", opts.device);
+  if (opts.board === "widths") params.set("board", "widths");
+  if (opts.board === "widths" && opts.screen) params.set("screen", opts.screen);
+  if (opts.width && opts.board !== "widths") params.set("width", String(opts.width));
   if (opts.size) params.set("size", opts.size);
   writeSelections(params, opts.selections ?? {});
   const qs = params.toString();
@@ -161,4 +214,16 @@ export function selectionLabels(proto: Prototype, selections: Selections) {
     const group = groups.get(g)!;
     return { group: group.label, option: group.options.find((x) => x.id === o)!.label };
   });
+}
+
+/** A page's group, as a change request names it. */
+export const groupOf = (screen: Screen) => screen.section;
+
+/**
+ * The distinct routes a set of pages covers. Several registry entries can
+ * share a route with different presets ("Decision", "Decision, approved"),
+ * and a change request should name the route once.
+ */
+export function routesOf(proto: Prototype, screens: Screen[]) {
+  return [...new Set(screens.map((s) => displayPath(proto, s.path)))];
 }

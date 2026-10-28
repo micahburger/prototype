@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "example-slug": { "path": "/Users/you/Projects/example-site" },
+    "another-slug": { "path": "/Users/you/Projects/another", "claude": "cd ~/Projects/another && claude --continue" }
+  }
+}

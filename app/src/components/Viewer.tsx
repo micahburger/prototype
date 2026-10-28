@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Action, Prototype, Selections } from "../types";
 import {
-  VIEWPORTS,
+  MODE_WIDTH,
+  WIDTH_VIEWPORTS,
   allGroups,
   deviceOf,
   frameSrc,
@@ -9,10 +10,14 @@ import {
   galleryHref,
   isSameOrigin,
   matchScreen,
+  homeMode,
   normalize,
+  parseMode,
   readSelections,
+  scaleLabel,
   screenById,
   viewerHref,
+  type FrameMode,
   type ViewerMode,
 } from "../lib/protos";
 import { navigate, useLocation } from "../lib/router";
@@ -20,8 +25,9 @@ import { PHONE_QUERY, useElementSize, useMediaQuery, useShortcuts } from "../lib
 import { clearOriginStorage, readPref, writePref } from "../lib/prefs";
 import { useToast } from "./Bits";
 import { ControlsPanel } from "./ControlsPanel";
+import { RequestPanel } from "./RequestPanel";
 import { TopBar } from "./TopBar";
-import { ArrowLeft, Collapse, ResetIcon, Sliders } from "./Icons";
+import { ArrowLeft, Collapse, Pencil, ResetIcon, Sliders } from "./Icons";
 
 /*
  * The URL is the source of truth for mode, screen and selections, so a
@@ -34,7 +40,12 @@ import { ArrowLeft, Collapse, ResetIcon, Sliders } from "./Icons";
  * that matches it is a no-op.
  */
 
-const PHONE_BEZEL = 12;
+/*
+ * The framed modes' cases. A phone and a tablet get a bezel; a desktop
+ * width is a plain rounded window, since a 1440px laptop drawn round it
+ * would only shrink the page further.
+ */
+const BEZELS: Record<FrameMode, number> = { phone: 12, tablet: 14, desktop: 0 };
 const STAGE_PAD = 32;
 const HELPER_SESSION_KEY = "protoviewer:state";
 
@@ -44,16 +55,15 @@ export function Viewer({ proto }: { proto: Prototype }) {
   const isPhoneWindow = useMediaQuery(PHONE_QUERY);
   const sameOrigin = isSameOrigin(proto);
 
-  const modeParam = params.get("mode");
+  const modeParam = parseMode(params.get("mode"));
   // With no mode in the URL, open at the prototype's own size: a desktop
   // site in a phone frame is a squeeze you'd switch out of every time. A
   // phone-sized window is full screen regardless — there's no room for a frame.
-  const mode: ViewerMode =
-    modeParam === "full" || modeParam === "phone"
-      ? modeParam
-      : isPhoneWindow || deviceOf(proto) === "desktop"
-        ? "full"
-        : "phone";
+  const mode: ViewerMode = modeParam ?? (isPhoneWindow || deviceOf(proto) === "desktop" ? "full" : "phone");
+  // Where leaving full screen goes back to: the last framed width seen,
+  // else the prototype's own.
+  const lastFrame = useRef<FrameMode>(mode === "full" ? homeMode(proto) : mode);
+  if (mode !== "full") lastFrame.current = mode;
   const selections = normalize(proto, readSelections(params));
   const selKey = stableKey(selections);
   const entryScreen = matchScreen(proto, proto.entry) ?? proto.screens[0];
@@ -253,17 +263,41 @@ export function Viewer({ proto }: { proto: Prototype }) {
     setDrawerOpen(false);
     replaceUrl({ mode: next });
   };
-  const view = viewerHref(proto.slug, { mode: modeParam as ViewerMode, screen: params.get("screen") ?? undefined, selections });
+  const view = viewerHref(proto.slug, { mode: modeParam, screen: params.get("screen") ?? undefined, selections });
   const gallery = galleryHref(proto.slug, { selections: pickGlobal(proto, selections) });
+
+  // ---- request a change --------------------------------------------------
+
+  const [requestOpen, setRequestOpen] = useState(false);
+  // Where the frame actually is, not where it was opened: knownPath follows
+  // the prototype's own navigation.
+  const previewUrl = () => frameSrc(proto, knownPath.current, selections);
+  const full = mode === "full";
+  const requestPanel = requestOpen && (
+    <RequestPanel
+      proto={proto}
+      variant={isPhoneWindow ? "sheet" : full ? "drawer" : "docked"}
+      context={{
+        screen,
+        width: full ? window.innerWidth : MODE_WIDTH[mode],
+        widthNote: full ? "full screen" : undefined,
+        selections,
+        previewUrl: previewUrl(),
+      }}
+      onClose={() => setRequestOpen(false)}
+    />
+  );
 
   useShortcuts({
     g: () => navigate(gallery),
-    f: () => setMode(mode === "full" ? "phone" : "full"),
+    f: () => setMode(mode === "full" ? lastFrame.current : "full"),
     ...(hasAnyStates && { s: () => setPanelOpen(!panelOpen) }),
+    c: () => setRequestOpen(!requestOpen),
     r: reset,
     Escape: () => {
       if (panelVariant !== "docked" && drawerOpen) setDrawerOpen(false);
-      else if (mode === "full") setMode("phone");
+      else if (requestOpen) setRequestOpen(false);
+      else if (mode === "full") setMode(lastFrame.current);
     },
   });
 
@@ -306,7 +340,6 @@ export function Viewer({ proto }: { proto: Prototype }) {
   // must never remount on a mode switch, or it reloads to its first state.
   // Every node above it keeps its type and position in both modes (the
   // `&&` slots hold their place when false); CSS does the rearranging.
-  const full = mode === "full";
   return (
     <div className={`pv-viewer${full ? " pv-viewer--full" : ""}`}>
       {!full && (
@@ -320,13 +353,20 @@ export function Viewer({ proto }: { proto: Prototype }) {
           onTogglePanel={hasAnyStates ? () => setPanelOpen(!panelOpen) : undefined}
           onReset={reset}
           resetTitle={resetTitle}
+          previewUrl={previewUrl}
+          requestOpen={requestOpen}
+          onToggleRequest={() => setRequestOpen(!requestOpen)}
         />
       )}
       <div className="pv-workspace">
         {panelVariant === "docked" && panel}
-        <PhoneStage full={full}>{iframe}</PhoneStage>
+        <DeviceStage mode={full ? lastFrame.current : mode} full={full}>
+          {iframe}
+        </DeviceStage>
+        {!full && !isPhoneWindow && requestPanel}
       </div>
       {panelVariant !== "docked" && panel}
+      {(full || isPhoneWindow) && requestPanel}
       {full && (
         // The dock is two layers in one spot: the full pill, and a small
         // handle that stands in for it while it sleeps. Only the handle (and
@@ -355,7 +395,11 @@ export function Viewer({ proto }: { proto: Prototype }) {
             <ResetIcon />
             <span>Reset</span>
           </button>
-          <button type="button" className="pv-pill__btn" onClick={() => setMode("phone")} title="Exit full screen (F or Esc)">
+          <button type="button" className="pv-pill__btn" aria-pressed={requestOpen} onClick={() => setRequestOpen(!requestOpen)} title="Request a change (C)">
+            <Pencil />
+            <span>Request</span>
+          </button>
+          <button type="button" className="pv-pill__btn" onClick={() => setMode(lastFrame.current)} title="Exit full screen (F or Esc)">
             <Collapse />
             <span>Exit full screen</span>
           </button>
@@ -368,26 +412,30 @@ export function Viewer({ proto }: { proto: Prototype }) {
 }
 
 /**
- * Centres a 390×844 phone in the space left, shrinking it (never growing) to
- * fit. In full screen the same nodes stay put and just stop being a phone —
- * see the note on the Viewer's return for why they can't be swapped out.
+ * Centres the frame at its mode's real viewport (390×844, 768×1024,
+ * 1440×900) in the space left, shrinking it (never growing) to fit, and
+ * says so underneath. In full screen the same nodes stay put and just stop
+ * being a device — see the note on the Viewer's return for why they can't
+ * be swapped out.
  */
-function PhoneStage({ full, children }: { full: boolean; children: React.ReactNode }) {
+function DeviceStage({ mode, full, children }: { mode: FrameMode; full: boolean; children: React.ReactNode }) {
   const [ref, { width, height }] = useElementSize<HTMLDivElement>();
-  const { width: vw, height: vh } = VIEWPORTS.phone;
-  const outerW = vw + PHONE_BEZEL * 2;
-  const outerH = vh + PHONE_BEZEL * 2;
+  const { width: vw, height: vh } = WIDTH_VIEWPORTS[MODE_WIDTH[mode]];
+  const bezel = BEZELS[mode];
+  const outerW = vw + bezel * 2;
+  const outerH = vh + bezel * 2;
   const scale = width && height ? Math.min(1, (height - STAGE_PAD * 2) / outerH, (width - STAGE_PAD * 2) / outerW) : 1;
   return (
     <div ref={ref} className={`pv-stage${full ? " pv-stage--full" : ""}`}>
       {/* The layout box is the scaled size, so centring works on what's seen. */}
       <div className="pv-stage__box" style={full ? undefined : { width: outerW * scale, height: outerH * scale }}>
         <div
-          className={`pv-phone${full ? " pv-phone--full" : ""}`}
-          style={full ? undefined : { width: outerW, height: outerH, padding: PHONE_BEZEL, transform: `scale(${scale})` }}
+          className={`pv-phone pv-phone--${mode}${full ? " pv-phone--full" : ""}`}
+          style={full ? undefined : { width: outerW, height: outerH, padding: bezel, transform: `scale(${scale})` }}
         >
           <div className="pv-phone__screen">{children}</div>
         </div>
+        {!full && <p className="pv-stage__caption">{scaleLabel(vw, scale)}</p>}
       </div>
     </div>
   );

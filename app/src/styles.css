@@ -320,6 +320,65 @@ body {
   .pv-live__skeleton { animation: none; }
 }
 
+/* A cover sits under the shimmer while the frame loads and stays behind an
+   error, so a page that won't load still reads as which page it is. */
+.pv-live__cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.pv-live__cover + .pv-live__skeleton {
+  opacity: 0.55;
+}
+
+.pv-live__status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pv-canvas) 85%, transparent);
+  font-size: 11px;
+  color: var(--pv-ink-2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Above the cards' full-cover link overlays (z-index 1), so Retry is
+   clickable where the rest of the card opens the viewer. */
+.pv-live__error {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--pv-canvas) 88%, transparent);
+  text-align: center;
+  font-size: 12px;
+  color: var(--pv-ink-2);
+}
+
+.pv-live__error .pv-btn {
+  height: 30px;
+  padding: 0 14px;
+}
+
+.pv-live.is-error iframe {
+  visibility: hidden;
+}
+
+.pv-live.is-error .pv-live__skeleton {
+  animation: none;
+}
+
 /* ---- landing ------------------------------------------------------------- */
 
 .pv-landing {
@@ -572,7 +631,9 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
+  /* Enough for a title, tag and the shortcuts; past that the controls wrap
+     to their own row rather than crushing the title to an ellipsis. */
+  min-width: min(100%, 340px);
   flex: 1;
   font-size: 13px;
 }
@@ -770,6 +831,42 @@ body {
   border-radius: 44px;
   overflow: hidden;
   background: #fff;
+}
+
+.pv-stage__box {
+  position: relative;
+}
+
+/* A tablet keeps a bezel, thinner-cornered; a desktop width is a plain
+   window — a drawn laptop around 1440px would only shrink the page more. */
+.pv-phone--tablet {
+  border-radius: 32px;
+}
+
+.pv-phone--tablet .pv-phone__screen {
+  border-radius: 18px;
+}
+
+.pv-phone--desktop {
+  border-radius: 10px;
+  background: none;
+}
+
+.pv-phone--desktop .pv-phone__screen {
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px var(--pv-line-strong);
+}
+
+.pv-stage__caption {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--pv-ink-3);
+  white-space: nowrap;
 }
 
 .pv-frame {
@@ -976,11 +1073,18 @@ body {
   max-width: 100%;
 }
 
-.pv-shot__link {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-decoration: none;
+.pv-shot__frame {
+  position: relative;
+  margin-bottom: 4px;
+}
+
+/* The whole preview opens the viewer; it's a sibling overlay, not a
+   wrapper, so the frame's Retry button (z-index 2) can sit above it. */
+.pv-shot__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
 }
 
 .pv-shot .pv-live {
@@ -990,19 +1094,186 @@ body {
   transition: transform 200ms var(--pv-ease), box-shadow 200ms var(--pv-ease);
 }
 
-.pv-shot--phone .pv-live { border-radius: 18px; }
-.pv-shot--desktop .pv-live { border-radius: 8px; }
+.pv-shot--w390 .pv-live { border-radius: 18px; }
+.pv-shot--w768 .pv-live { border-radius: 12px; }
+.pv-shot--w1440 .pv-live { border-radius: 8px; }
 
 @media (hover: hover) {
-  .pv-shot__link:hover .pv-live {
+  .pv-shot__frame:hover .pv-live {
     transform: translateY(-2px);
     box-shadow: var(--pv-shadow-device);
   }
 }
 
+/* While the request panel is open a click picks a preview instead of
+   opening it; the pick wears a solid ring. */
+.pv-gallery.is-picking .pv-shot__hit {
+  cursor: crosshair;
+}
+
+.pv-shot.is-picked .pv-live {
+  box-shadow: 0 0 0 2px var(--pv-canvas), 0 0 0 4px var(--pv-solid), var(--pv-shadow);
+}
+
+.pv-shot__scale {
+  font-size: 11px;
+  color: var(--pv-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
 .pv-shot__title {
   font-size: 14px;
   font-weight: 500;
+  text-decoration: none;
+}
+
+.pv-gallery__grid--widths {
+  gap: 32px 24px;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 960px) {
+  .pv-gallery__grid--widths {
+    flex-wrap: wrap;
+  }
+}
+
+.pv-gallery__heading code {
+  font-family: var(--pv-mono);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.pv-select {
+  height: 36px;
+  max-width: 100%;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--pv-line-strong);
+  background: var(--pv-surface);
+  color: var(--pv-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+/* ---- shortcuts and change requests -------------------------------------- */
+
+.pv-shortcuts {
+  display: inline-flex;
+  gap: 0;
+  margin-left: 4px;
+}
+
+.pv-request.pv-panel--docked {
+  width: 360px;
+  border-right: 0;
+  border-left: 1px solid var(--pv-line);
+}
+
+/* Over full screen it comes in from the right, opposite the states drawer. */
+.pv-request.pv-panel--drawer {
+  left: auto;
+  right: 12px;
+  width: 380px;
+  animation-name: pv-drawer-right;
+}
+
+@keyframes pv-drawer-right { from { transform: translateX(24px); opacity: 0; } }
+
+.pv-request.pv-panel--sheet {
+  max-height: 85vh;
+  max-height: 85dvh;
+}
+
+.pv-request__body > .pv-group + .pv-group,
+.pv-request__body > .pv-request__hint + .pv-group {
+  margin-top: 18px;
+}
+
+.pv-request__context {
+  font-size: 13px;
+  color: var(--pv-ink-2);
+}
+
+.pv-request__context strong {
+  color: var(--pv-ink);
+  font-weight: 600;
+}
+
+.pv-request__hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--pv-ink-3);
+}
+
+.pv-request__field {
+  display: block;
+}
+
+.pv-request__field .pv-group__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.pv-request__rebuild {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.pv-request .pv-seg {
+  flex-wrap: wrap;
+}
+
+.pv-input {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--pv-line-strong);
+  background: var(--pv-surface);
+  color: var(--pv-ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.pv-input:focus-visible {
+  outline: 2px solid var(--pv-ink);
+  outline-offset: 1px;
+}
+
+.pv-input--mono {
+  font-family: var(--pv-mono);
+  font-size: 11.5px;
+}
+
+.pv-request__foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--pv-line);
+}
+
+.pv-request__status {
+  flex: 1;
+  font-size: 12px;
+  color: var(--pv-ink-2);
+}
+
+.pv-btn--solid {
+  background: var(--pv-solid);
+  border-color: var(--pv-solid);
+  color: var(--pv-on-solid);
+}
+
+.pv-btn--solid:hover {
+  background: var(--pv-solid);
+  opacity: 0.9;
 }
 
 .pv-chips {

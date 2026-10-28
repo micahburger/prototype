@@ -2,7 +2,9 @@ import type { Prototype } from "./types";
 
 // The only file to edit when adding a prototype. Field reference is in the
 // README; the short version: slug/title/description/status/updated/entry, a
-// list of screens, and optionally states, actions and storageKeys.
+// list of screens, and optionally repo, states, actions and storageKeys.
+// Local source folders are not here — this file ships to the live site —
+// but in app/hub.local.json (gitignored, read only by the dev server).
 //
 // Every live site here is on its own origin, which shapes what the viewer can
 // do with it. Until a site loads /helper/protostate.js the viewer can show
@@ -19,6 +21,7 @@ const prototypes: Prototype[] = [
     status: "done",
     updated: "2026-09-19T22:18:34-04:00",
     entry: "https://2026folio.micahburger.com/",
+    repo: "https://github.com/micahburger/2026folio",
     device: "desktop",
     // Path routes, one per chapter (PortfolioShell.tsx in ../2026folio-site).
     screens: [
@@ -37,6 +40,7 @@ const prototypes: Prototype[] = [
     status: "done",
     updated: "2026-08-21T23:25:17-04:00",
     entry: "https://applicants.micahburger.com/",
+    repo: "https://github.com/micahburger/Applicants",
     device: "desktop",
     screens: [
       { id: "case-study", title: "Case study", path: "/" },
@@ -51,6 +55,7 @@ const prototypes: Prototype[] = [
     status: "done",
     updated: "2026-08-19T12:46:33-04:00",
     entry: "https://lattice2026.micahburger.com/",
+    repo: "https://github.com/micahburger/Lattice2.0",
     device: "desktop",
     // The intro's "seen" flag (app.js), cleared through the helper on Reset.
     storageKeys: ["latticeIntroSeen"],
@@ -184,6 +189,7 @@ const prototypes: Prototype[] = [
     status: "concept",
     updated: "2026-10-27",
     entry: "/demo/index.html",
+    repo: "https://github.com/micahburger/prototype",
     device: "phone",
     storageKeys: ["demo:"],
     liveStates: true,

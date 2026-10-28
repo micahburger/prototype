@@ -15,11 +15,14 @@ npm --prefix app run dev     # http://localhost:4177/prototypes
 | URL | What |
 |---|---|
 | `/prototypes` | every prototype, newest first, with search |
-| `/prototypes/:slug?mode=phone\|full&screen=:id&state.<group>=<option>` | the viewer |
-| `/prototypes/:slug/gallery?device=phone\|desktop&size=s\|m\|l&state.<group>=<option>` | every screen |
+| `/prototypes/:slug?mode=phone\|tablet\|desktop\|full&screen=:id&state.<group>=<option>` | the viewer, at 390 / 768 / 1440 or full screen |
+| `/prototypes/:slug/gallery?width=390\|768\|1440&size=s\|m\|l&state.<group>=<option>` | review board: every page at one width |
+| `/prototypes/:slug/gallery?board=widths&screen=:id` | review board: one page at all three widths |
 
-Shortcuts: **G** View/Gallery · **F** full screen · **S** controls · **R** reset ·
-**Esc** exit full screen / close drawer. They work while focus is on the
+Older `gallery?device=phone|desktop` links still work (read as 390 / 1440).
+
+Shortcuts: **G** View/Review · **F** full screen · **S** controls · **C** request a
+change · **R** reset · **Esc** exit full screen / close drawer. They work while focus is on the
 viewer's own chrome. Once you've clicked into a prototype, its frame has the
 keyboard.
 
@@ -27,6 +30,16 @@ With no `mode` in the URL, the viewer opens at the prototype's `device`: a
 phone frame for phone prototypes, full screen for desktop ones. The States
 button, panel and **S** shortcut only appear for prototypes that declare
 states or actions.
+
+## Local shortcuts
+
+Copy local path and Copy Claude Code command read `app/hub.local.json`
+(gitignored; copy `app/hub.local.example.json`). It is only read by the dev
+server, so these two buttons never appear on the live site.
+
+```json
+{ "projects": { "lattice": { "path": "/Users/me/Projects/lattice-site" } } }
+```
 
 ## Adding a prototype
 
@@ -44,6 +57,7 @@ helper (below).
 | `updated` | ISO date (`2026-10-27`) or date-time. Sorts the index. |
 | `entry` | start screen: a full URL, or a path on this site (`/demo/index.html`) |
 | `device` | `"phone"` (default) or `"desktop"`: the preview frame on the index, and the gallery's default |
+| `repo` | repository URL; shows an Open repo button |
 | `thumbnail` | image path. Omit it and the card shows a live preview of `entry`. |
 | `storageKeys` | localStorage/sessionStorage key **prefixes** this prototype writes, cleared by Reset |
 | `liveStates` | `true` if the prototype applies state changes without a reload (posts instead of reloading) |
@@ -57,7 +71,8 @@ helper (below).
 |---|---|
 | `id`, `title` | id unique within the prototype |
 | `path` | relative to `entry`'s origin, or a full URL. A `#hash` makes the match hash-specific. |
-| `section` | groups gallery cards under a heading |
+| `section` | the page's group: a heading on the review board, "This group" in a change request |
+| `cover` | image shown while the live preview loads, or if it fails |
 | `states`, `actions` | groups and buttons that only show on this screen |
 | `preset` | `{ groupId: optionId }` this entry opens with |
 
