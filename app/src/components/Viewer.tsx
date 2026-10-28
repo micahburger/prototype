@@ -328,7 +328,19 @@ export function Viewer({ proto }: { proto: Prototype }) {
       </div>
       {panelVariant !== "docked" && panel}
       {full && (
-        <div className={`pv-pill${awake || drawerOpen ? "" : " is-asleep"}`} onPointerEnter={() => wake.current()}>
+        // The dock is two layers in one spot: the full pill, and a small
+        // handle that stands in for it while it sleeps. Only the handle (and
+        // the awake pill) take pointer events, so a sleeping dock blocks a
+        // thumb-sized strip of the prototype instead of the pill's whole width.
+        <div className={`pv-dock${awake || drawerOpen ? "" : " is-asleep"}`}>
+          <button
+            type="button"
+            className="pv-dock__handle"
+            aria-label="Show viewer controls"
+            onPointerEnter={() => wake.current()}
+            onClick={() => wake.current()}
+          />
+          <div className="pv-pill" onPointerEnter={() => wake.current()}>
           <button type="button" className="pv-pill__btn" onClick={() => navigate("/prototypes")} title="All prototypes">
             <ArrowLeft />
             <span>Back</span>
@@ -347,6 +359,7 @@ export function Viewer({ proto }: { proto: Prototype }) {
             <Collapse />
             <span>Exit full screen</span>
           </button>
+          </div>
         </div>
       )}
       {toastNode}

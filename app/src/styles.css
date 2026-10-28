@@ -807,64 +807,122 @@ body {
   border-radius: 0;
 }
 
-.pv-pill {
+/*
+ * The full-screen dock. Prototypes tend to park their own controls bottom-
+ * right in solid dark pills (Lattice does), so the viewer's sits bottom-
+ * centre and is built from the opposite material: translucent frosted
+ * canvas with a hairline edge. It should read as a layer *over* the
+ * prototype, never as part of it.
+ */
+.pv-dock {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
   z-index: 30;
+  display: grid;
+  justify-items: center;
+  align-items: end;
+  transform: translateX(-50%);
+  /* Only the children opt back in — see the note in Viewer.tsx. */
+  pointer-events: none;
+}
+
+.pv-dock > * {
+  grid-area: 1 / 1;
+}
+
+.pv-pill {
   display: flex;
   gap: 2px;
   padding: 4px;
   border-radius: 999px;
-  background: rgba(29, 28, 26, 0.88);
-  color: #f6f4ef;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  transition: opacity 400ms var(--pv-ease), transform 400ms var(--pv-ease);
+  background: color-mix(in srgb, var(--pv-canvas) 90%, transparent);
+  color: var(--pv-ink);
+  border: 1px solid var(--pv-line-strong);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: 0 1px 2px rgba(20, 18, 14, 0.08), 0 10px 32px rgba(20, 18, 14, 0.16);
+  pointer-events: auto;
+  transform-origin: 50% 100%;
+  transition: opacity 260ms var(--pv-ease), transform 320ms var(--pv-ease);
 }
 
-/* Asleep is only invisible, never inert: hovering the empty corner still
-   finds it, which is the one wake-up that works over a cross-origin frame
-   that hasn't adopted the helper. */
-.pv-pill.is-asleep {
+/* Asleep, the pill folds down into the handle rather than vanishing, so
+   there is always something visible to reach for — including on touch,
+   where there's no hover and taps on the prototype never reach us. */
+.pv-dock.is-asleep .pv-pill {
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(4px) scale(0.92);
+  pointer-events: none;
 }
 
-.pv-pill:hover {
+.pv-dock__handle {
+  position: relative;
+  width: 44px;
+  height: 6px;
+  margin-bottom: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pv-canvas) 85%, transparent);
+  /* A light bar with a dark hairline and soft shadow stays visible on
+     both a white page and a black one. */
+  box-shadow: 0 0 0 1px rgba(20, 18, 14, 0.22), 0 2px 8px rgba(20, 18, 14, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity 260ms var(--pv-ease), transform 200ms var(--pv-ease);
+}
+
+/* The bar is 6px tall; the target isn't. */
+.pv-dock__handle::before {
+  content: "";
+  position: absolute;
+  inset: -16px -36px -12px;
+}
+
+.pv-dock.is-asleep .pv-dock__handle {
   opacity: 1;
-  transform: none;
+  pointer-events: auto;
 }
 
-/* A touchscreen has no hover to find a fully faded pill with, and taps on
-   the prototype never reach the viewer — so on touch it only dims. */
-@media (hover: none) {
-  .pv-pill.is-asleep {
-    opacity: 0.35;
-    transform: none;
-  }
+.pv-dock.is-asleep .pv-dock__handle:hover {
+  transform: scaleX(1.15);
 }
 
 .pv-pill__btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
+  height: 32px;
   padding: 0 12px;
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: inherit;
+  color: var(--pv-ink-2);
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  transition: background-color 140ms var(--pv-ease), color 140ms var(--pv-ease);
 }
 
-.pv-pill__btn:hover,
+.pv-pill__btn:hover {
+  color: var(--pv-ink);
+  background: color-mix(in srgb, var(--pv-ink) 8%, transparent);
+}
+
 .pv-pill__btn[aria-pressed="true"] {
-  background: rgba(255, 255, 255, 0.14);
+  color: var(--pv-ink);
+  background: var(--pv-chrome-raised);
+  box-shadow: 0 0 0 1px var(--pv-line);
+}
+
+/* Toasts normally sit where the dock now is; lift them clear of it. */
+.pv-viewer--full .pv-toast {
+  bottom: calc(68px + env(safe-area-inset-bottom));
 }
 
 /* ---- gallery ------------------------------------------------------------- */
