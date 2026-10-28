@@ -274,3 +274,189 @@ output matches the source.
 - Mobile (≤640px) layouts of the request sheet and the board's new controls.
 - The real clipboard success path. It was simulated with a stub, because
   the pane always blocks the clipboard.
+
+---
+
+## Step 3 — 2026-10-27: Corner Bodega inventory
+
+- **Project:** `../corner-bodega/` (sibling of this repo, its own git repo,
+  `main`, nothing committed yet, no remote). Not part of the hub.
+- **Read `../corner-bodega/INVENTORY.md` before building anything.** It
+  lists every page, product, Etsy link, stockist, image and old URL, plus
+  content problems that shouldn't be ported as they are.
+- `_import/` holds the untouched WordPress export and is gitignored.
+  `assets/uploads/YYYY/MM/` has the 156 original media files (160 MB), with
+  filenames kept; `assets/image-map.csv` maps every old upload URL to one.
+- Headlines (all verified):
+  - The site is 8 pages: home plus 7 Semplice "projects" (six artist pages
+    and "Site of the day").
+  - Products: 18, all sold on Etsy.
+  - The Etsy shop has been on a break since 2025-12-16.
+  - There are no forms, search or feeds to replace.
+- **`../corner-bodega/DECISIONS.md`** settles the content problems with
+  first calls. It is the copy the rebuild uses; INVENTORY.md is the record
+  of the old site. The main calls:
+  - Desktop text wins.
+  - Etsy wins on price and name.
+  - Stockists are the union of every list (9 shops).
+  - The pencil links to the Etsy shop.
+  - Matt's Add to Cart goes to Passengers.
+  - The dead Prone Studio link is removed, keeping the name.
+
+---
+
+## Step 4 — 2026-10-27: Corner Bodega home and artist page
+
+- `../corner-bodega` is an **Eleventy 3** site: JSON content in
+  `src/_data/`, Nunjucks templates, and plain static output in `_site/`.
+  Its README covers the commands and layout.
+- The build setting is `SITE_MODE`, preview by default — verified:
+  - Preview gives `noindex` on every page, a disallow-all robots.txt, an
+    `X-Robots-Tag` header in `.htaccess`, and no sitemap.
+  - Production gives canonical URLs on https://cornerbodega.pub, a
+    `sitemap.xml` and a normal robots.txt.
+- Built so far: `/` and `/project/abbeyluck`. The other menu links point at
+  pages that don't exist yet.
+- Hub: registered as `corner-bodega`, with screens Home (group "Home") and
+  Abbey Luck (group "Artist pages"). The entry is
+  https://cornerbodega.micahburger.com/, which **isn't set up yet**, so its
+  hub frames show error + Retry until the preview is deployed.
+- Dev server: `corner-bodega-dev` (port 8080) in this session's
+  launch.json, plus `npm --prefix ../corner-bodega run dev`.
+- Comparisons: run `node tools/screenshots.mjs` and then
+  `python3 tools/compare.py` in corner-bodega. They write
+  `shots/compare-*.jpg` (gitignored).
+
+---
+
+## Step 5 — 2026-10-27: every public page migrated
+
+- **Pages built**, all verified at 390/768/1440: `/`, the six artist pages
+  `/project/{abbeyluck,diego,badrul,mrtaylor,yusuf,jered}`, and a 404
+  (`404.html`, wired up through `ErrorDocument`, with real 404 status).
+  - Artist copy was converted from the export's Semplice JSON, with the
+    DECISIONS.md fixes applied.
+  - Every image has hand-written alt text.
+- **Site of the day dropped** at Micah's request (DECISIONS.md §7). It's
+  gone from the menu, and `/project/sod` 404s until the redirects step
+  sends it to `/`.
+- **Not migrated** (WordPress leftovers, for redirects): `/hello-world`,
+  `/category/uncategorized`, `/author/micahmicahdesign`, the feeds and
+  sitemaps, and attachment pages.
+- **Hub:** corner-bodega has 8 screens: Home ("Home"), six artists
+  ("Artist pages"), and the 404 ("Errors"). Each is still waiting on the
+  preview subdomain.
+- **Checks** — `node tools/check.mjs`, verified with no problems:
+  - every page at all three widths: no horizontal overflow, every image
+    loads (lazy gallery slides forced), alt text on all;
+  - zero requests outside the site and none to `wp-content`;
+  - 877 local file references in `_site/` all exist;
+  - keyboard: every tab stop shows focus, from the skip link to the footer;
+  - the menu opens with 6 links and Esc closes it;
+  - all 5 home-page galleries page forward and back;
+  - every internal link returns 200;
+  - 18 distinct Etsy URLs: 17 listings plus the shop. The shop URL is in
+    every footer and is also the pencils' link. Each one maps to its
+    product, and each artist's Add to Cart goes to that artist's own zine.
+- Etsy listings themselves were opened in Chrome during Step 3 (same day,
+  same URLs) and not re-opened here. The shop is still on its break.
+
+---
+
+## Step 6 — 2026-10-28: production prep and the preview deploy
+
+### Production prep (code, in ../corner-bodega) — verified locally
+
+- **Meta:** every page has a title, a description, Open Graph tags, a
+  `twitter:card`, and a 1200×630 social image.
+  - Artist pages use their hero image, cropped. Home and the 404 use the
+    logo GIF, letterboxed.
+  - Image URLs are absolute on whichever domain the build is for.
+- **`.htaccess`** is generated from `src/htaccess.njk` +
+  `src/_data/redirects.json`:
+  - **Production:** http and www go to `https://cornerbodega.pub` in one
+    hop, which matches the live site. Framing is `frame-ancestors 'self'`.
+  - **Preview:** https is forced. `X-Robots-Tag: noindex, nofollow`, and
+    `frame-ancestors 'self' https://prototypes.micahburger.com
+    http://localhost:4177`, with any `X-Frame-Options` removed so the hub
+    can frame pages.
+  - **Both:** 301s for every changed old URL —
+    - 20 hand-listed (Hello world, archives, feeds, sitemaps, Site of the
+      day, old project slugs, WordPress's `-duplicate` slugs);
+    - `?p=` / `?page_id=` / `?s=`;
+    - all 156 attachment pages → `/uploads/<original>`;
+    - `/wp-content/uploads/…`, including resized copies → `/uploads/<original>`;
+    - plus trailing slash → slashless, extensionless pages, and the
+      ErrorDocument 404.
+- **Builds:**
+  - `npm run build` → `_site/` (PREVIEW, 114 MB): all 8 HTML pages carry
+    noindex, robots.txt disallows everything, and there's no sitemap.
+  - `npm run build:production` → `_production/` (306 MB, because it carries
+    all 156 originals so old image URLs land on real files): grep finds
+    **no noindex anywhere**, 7 canonical URLs, a 7-URL sitemap and a
+    normal robots.txt. The 404 has no noindex — its 404 status is enough.
+
+### Preview deploy — done, verified
+
+- **Site created in hPanel** (approved): Websites → Create site → PHP/HTML
+  website → `cornerbodega.micahburger.com` ("Use it") → Next. It's on the
+  same Premium plan as the other subdomains.
+  - Hostinger added DNS itself in the micahburger.com zone: A
+    82.29.87.167 and AAAA 2a02:4780:b:630:0:cc6:42e8:8. No "Connect
+    domain" step was needed.
+  - Folder: `~/domains/cornerbodega.micahburger.com/public_html/`.
+  - Nothing on cornerbodega.pub, its DNS or WordPress was touched.
+- **SSL:** a Let's Encrypt certificate (YE1) for
+  cornerbodega.micahburger.com, issued automatically about a minute after
+  creation, valid until 2027-01-26.
+- **SSH works from this Mac**, key only, no password:
+  - key `~/.ssh/hostinger_micahburger`, port 65002;
+  - the username is in hPanel → SSH Access (it's in
+    `tools/deploy-preview.sh`, not here, because this file is public);
+  - host key ED25519 `SHA256:I6WhBXa9cABfrCnoD+oX/m+GAYoW9A7YkURr4KKrMJg`,
+    which matches hPanel.
+  - So deploys use **rsync over SSH**, not a zip through File Manager.
+- **On the real server**, verified with curl:
+  - all 7 pages return 200, a trailing slash 301s, unknown URLs get the
+    styled 404 with status 404, and http 301s to https;
+  - the noindex and frame-ancestors headers are present;
+  - every redirect type was tested and 301s to the right place.
+  - (The `/uploads/` originals and `sitemap.xml` 404 on the preview by
+    design; production carries them.)
+- `node tools/check.mjs https://cornerbodega.micahburger.com` → **no
+  problems** at 390/768/1440: every image loads from the new site, there
+  are zero requests to WordPress, and focus, the menu, galleries and links
+  all pass.
+- **Etsy spot-check** in Chrome, clicked from the live preview:
+  - Found Objects card → "Found Objects - Illustration zine";
+  - Matt's Add to Cart → "Passengers - Illustration zine";
+  - Badrul's → "New York State of Mind - B/W Photography zine".
+  - The shop is still on its break.
+- **Hub:** the corner-bodega entry is `https://cornerbodega.micahburger.com/`.
+  On the local hub (localhost:4177) all 7 page frames load with no framing
+  refusals. **The live hub won't show it until the prototypes-site changes
+  from Steps 4–6 are committed and pushed.**
+
+### How to update the preview (repeatable)
+
+```sh
+cd "/Users/_Micah/_2026/Claude Prototypes/corner-bodega"
+./tools/deploy-preview.sh
+```
+
+The script does four things:
+1. Builds PREVIEW into `_site/`.
+2. Refuses to continue if any page lacks noindex.
+3. Shows what would change on the server.
+4. Asks, then runs `rsync -rlzc --delete` into the subdomain's
+   `public_html` only. `--yes` skips the question.
+
+Then run `node tools/check.mjs https://cornerbodega.micahburger.com`.
+
+If the key ever stops working, there's a manual fallback:
+1. `npm run build`.
+2. Zip the *contents* of `_site/`, hidden `.htaccess` included:
+   `cd _site && zip -r ../preview.zip . && cd ..`
+3. hPanel → cornerbodega.micahburger.com → File manager → `public_html` →
+   delete the old files → Upload `preview.zip` → Extract here → delete
+   the zip.

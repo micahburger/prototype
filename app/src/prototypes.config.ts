@@ -15,6 +15,30 @@ import type { Prototype } from "./types";
 
 const prototypes: Prototype[] = [
   {
+    slug: "corner-bodega",
+    title: "Corner Bodega",
+    description: "A static rebuild of cornerbodega.pub — the zine shop, six artist pages and a 404.",
+    status: "in progress",
+    updated: "2026-10-27T23:30:00-04:00",
+    // The preview subdomain the rebuild deploys to (NOTES.md). Until it's set
+    // up these frames show the board's error + Retry; locally, run the site
+    // with `npm --prefix ../corner-bodega run dev` and open it on :8080.
+    entry: "https://cornerbodega.micahburger.com/",
+    device: "desktop",
+    // Paths are the old site's URLs, kept as-is by the rebuild.
+    screens: [
+      { id: "home", title: "Home", path: "/", section: "Home" },
+      { id: "abbeyluck", title: "Abbey Luck — Crumble Cave", path: "/project/abbeyluck", section: "Artist pages" },
+      { id: "diego", title: "Diego Rioja — From Above", path: "/project/diego", section: "Artist pages" },
+      { id: "badrul", title: "Badrul Rupak — NYSoM, The Love Bug", path: "/project/badrul", section: "Artist pages" },
+      { id: "mrtaylor", title: "Matt Taylor — Passengers", path: "/project/mrtaylor", section: "Artist pages" },
+      { id: "yusuf", title: "Yusuf Lateef — New Mythology", path: "/project/yusuf", section: "Artist pages" },
+      { id: "jered", title: "Jered Snyder — Peculiar Notion", path: "/project/jered", section: "Artist pages" },
+      // Any missing URL shows the 404; this one is just guaranteed missing.
+      { id: "not-found", title: "Page not found (404)", path: "/this-page-does-not-exist", section: "Errors" },
+    ],
+  },
+  {
     slug: "2026folio",
     title: "2026 portfolio",
     description: "Four product chapters and a resume — a slide deck on desktop, a scroll on mobile.",
