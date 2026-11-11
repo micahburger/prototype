@@ -1,12 +1,43 @@
-# SPA fallback for client-side routing (the viewer uses
-# history.pushState (see src/lib/router.ts), not a file-based router.
-# Hostinger serves this repo's root over Apache/LiteSpeed, which has no
-# knowledge of app routes like /prototypes/lattice/gallery — without
-# this, a direct load or refresh on one of those returns a real 404 instead
-# of the SPA shell.
+# Hostinger serves this repo's root as the site, so everything committed
+# here is public unless a rule below says otherwise. This file is the
+# source: deploy.sh copies it (with the rest of app/public) to the root.
+
+# ---- security headers ----
+# Same block as v2-site, applicants-site and ds-site (2026-11-11); v2-site's
+# .htaccess explains each choice at length, so change one, change all.
+# In short: HTTPS only, no type sniffing, framing only by Micah's own sites
+# (the prototype viewer at prototypes.micahburger.com shows these pages in
+# iframes; localhost for running it in dev), no full URLs leaked to other
+# sites, no camera, mic or location.
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Content-Security-Policy "upgrade-insecure-requests; frame-ancestors 'self' https://micahburger.com https://*.micahburger.com http://localhost:*"
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # ---- not part of the site ----
+  # The source (app/), the build script, the notes (README, NOTES, CLAUDE)
+  # and any scripts, configs, source maps or dotfiles are refused before
+  # the "real files" rule can serve them. TypeScript is refused everywhere
+  # except helper/: useProtoState.ts there is published on purpose, for
+  # prototypes to copy in (README). robots.txt still serves.
+  RewriteRule ^app(/|$) - [F,L]
+  RewriteRule \.(md|sh|tsx|map|lock)$ - [F,L,NC]
+  RewriteCond %{REQUEST_URI} !^/helper/
+  RewriteRule \.ts$ - [F,L,NC]
+  RewriteRule (^|/)(package(-lock)?\.json|tsconfig[^/]*\.json|vite\.config\.[a-z]+)$ - [F,L,NC]
+  RewriteCond %{REQUEST_URI} !^/\.well-known/
+  RewriteRule (^|/)\. - [F,L]
+
+  # ---- SPA fallback ----
+  # App routes have no file behind them; without this a direct load or
+  # refresh on one returns a real 404 instead of the app.
 
   # Real files and directories (JS, CSS, images, fonts, etc.) resolve as-is.
   RewriteCond %{REQUEST_FILENAME} -f [OR]
@@ -14,7 +45,7 @@
   RewriteRule ^ - [L]
 
   # Everything else falls back to the SPA shell so the client router can
-  # take over — an internal rewrite, not a redirect, so the URL bar (and
+  # take over: an internal rewrite, not a redirect, so the URL bar (and
   # therefore window.location.pathname) is untouched.
   RewriteRule ^ index.html [L]
 </IfModule>
