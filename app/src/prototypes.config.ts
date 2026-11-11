@@ -63,13 +63,16 @@ const prototypes: Prototype[] = [
     description: "RentSpree applicant case study, from the first form field through payment.",
     status: "done",
     updated: "2026-08-21T23:25:17-04:00",
-    entry: "https://applicants.micahburger.com/",
-    repo: "https://github.com/micahburger/Applicants",
+    // Moved into v2 on 2026-11-11 (it was applicants.micahburger.com, which
+    // now redirects here). Paths are full because a leading "/" resolves
+    // against v2's root, not the page's folder.
+    entry: "https://v2.micahburger.com/project/applicant-experience/",
+    repo: "https://github.com/micahburger/v2",
     device: "desktop",
     screens: [
-      { id: "case-study", title: "Case study", path: "/" },
-      { id: "screens", title: "Screens", path: "/screens/" },
-      { id: "styleguide", title: "Styleguide", path: "/styleguide/" },
+      { id: "case-study", title: "Case study", path: "/project/applicant-experience/" },
+      { id: "screens", title: "Screens", path: "/project/applicant-experience/screens/" },
+      { id: "styleguide", title: "Styleguide", path: "/project/applicant-experience/styleguide/" },
     ],
   },
   {
