@@ -64,9 +64,10 @@ const prototypes: Prototype[] = [
     status: "done",
     updated: "2026-08-21T23:25:17-04:00",
     // Moved into v2 on 2026-11-11 (it was applicants.micahburger.com, which
-    // now redirects here). Paths are full because a leading "/" resolves
-    // against v2's root, not the page's folder.
-    entry: "https://v2.micahburger.com/project/applicant-experience/",
+    // now redirects here), and v2 became micahburger.com on 2026-11-13.
+    // Paths are full because a leading "/" resolves against the site's
+    // root, not the page's folder.
+    entry: "https://micahburger.com/project/applicant-experience/",
     repo: "https://github.com/micahburger/v2",
     device: "desktop",
     screens: [
