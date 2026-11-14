@@ -10,8 +10,8 @@ import type { Prototype } from "./types";
 // do with it. Until a site loads /helper/protostate.js the viewer can show
 // and reload it but can't see which page it's on, clear its storage or drive
 // its states — those groups are left out below rather than declared and
-// doing nothing. The demo at the bottom is same-origin and uses the helper,
-// so it exercises the whole contract.
+// doing nothing. The same-origin demo at /demo/index.html still uses the
+// helper and exercises the whole contract; it just no longer has a card.
 
 const prototypes: Prototype[] = [
   {
@@ -62,7 +62,7 @@ const prototypes: Prototype[] = [
     title: "Rental application redesign",
     description: "RentSpree applicant case study, from the first form field through payment.",
     status: "done",
-    updated: "2026-08-21T23:25:17-04:00",
+    updated: "2026-11-11T22:09:53-05:00",
     // Moved into v2 on 2026-11-11 (it was applicants.micahburger.com, which
     // now redirects here), and v2 became micahburger.com on 2026-11-13.
     // Paths are full because a leading "/" resolves against the site's
@@ -192,17 +192,17 @@ const prototypes: Prototype[] = [
   {
     slug: "micahburger",
     title: "micahburger.com",
-    description: "The main portfolio, rebuilt from Semplice — every case study, plus an archive of the older work.",
+    description: "The homepage, rebuilt from Semplice: clients, work history and featured projects, linking to every case study below.",
     status: "done",
     // v2 replaced the WordPress site on 2026-11-13 (v2.micahburger.com now
-    // 301s here). The rebuild lives in the v2 repo.
+    // 301s here). Each case study also has its own card; this one keeps the
+    // whole site on one review board.
     updated: "2026-11-13T19:03:45-05:00",
     entry: "https://micahburger.com/",
     repo: "https://github.com/micahburger/v2",
     device: "desktop",
     // View-only until v2 loads /helper/protostate.js. Paths are v2's routes
-    // (sitemap.xml). WWE, BBC, Rockwell, ABA and FPO are no longer their own
-    // pages: their old URLs 301 to /project/archive#<slug>.
+    // (sitemap.xml).
     screens: [
       { id: "home", title: "Home", path: "/" },
       { id: "rentspree", title: "RentSpree", path: "/project/rentspree", section: "Case studies" },
@@ -210,73 +210,79 @@ const prototypes: Prototype[] = [
       { id: "opendoor", title: "Opendoor", path: "/project/opendoor", section: "Case studies" },
       { id: "lincoln", title: "Lincoln", path: "/project/lincoln", section: "Case studies" },
       { id: "infinity", title: "Infinity", path: "/project/infinity", section: "Case studies" },
-      { id: "archive", title: "Archive — WWE, BBC, Rockwell, ABA, FPO", path: "/project/archive", section: "Archive" },
+      { id: "archive", title: "Archive", path: "/project/archive", section: "Case studies" },
     ],
   },
   {
-    slug: "helper-demo",
-    title: "State helper demo",
-    description: "A tiny leasing inbox that wires up every part of the state helper. Delete freely.",
-    status: "concept",
-    updated: "2026-10-27",
-    entry: "/demo/index.html",
-    repo: "https://github.com/micahburger/prototype",
-    device: "phone",
-    storageKeys: ["demo:"],
-    liveStates: true,
-    states: [
-      {
-        id: "viewer",
-        label: "Viewer",
-        options: [
-          { id: "agent", label: "Agent" },
-          { id: "landlord", label: "Landlord" },
-          { id: "renter", label: "Renter" },
-        ],
-      },
-    ],
-    actions: [{ id: "jump-five-days", label: "Jump ahead five days" }],
+    slug: "rentspree",
+    title: "RentSpree",
+    description: "The 2026 portfolio’s four chapters as one case study: applicant experience, requesting an application, messaging and the Rental Assistant.",
+    status: "done",
+    updated: "2026-11-10T21:02:14-05:00",
+    entry: "https://micahburger.com/project/rentspree",
+    repo: "https://github.com/micahburger/v2",
+    device: "desktop",
     screens: [
-      {
-        id: "applications",
-        title: "Applications",
-        path: "/demo/index.html#applications",
-        section: "Applications",
-        states: [
-          {
-            id: "stage",
-            label: "Stage",
-            options: [
-              { id: "some", label: "A few in progress" },
-              { id: "empty", label: "Empty" },
-              { id: "just-invited", label: "Just invited" },
-            ],
-          },
-        ],
-        actions: [{ id: "add-application", label: "Add an application" }],
-      },
-      { id: "applications-empty", title: "Applications, empty", path: "/demo/index.html#applications", section: "Applications", preset: { stage: "empty" } },
-      { id: "applications-invited", title: "Applications, just invited", path: "/demo/index.html#applications", section: "Applications", preset: { stage: "just-invited" } },
-      {
-        id: "decision",
-        title: "Decision",
-        path: "/demo/index.html#decision",
-        section: "Decision",
-        states: [
-          {
-            id: "outcome",
-            label: "Outcome",
-            options: [
-              { id: "pending", label: "Pending" },
-              { id: "approved", label: "Approved" },
-              { id: "declined", label: "Declined" },
-              { id: "error", label: "Failed to load" },
-            ],
-          },
-        ],
-      },
-      { id: "decision-approved", title: "Decision, approved", path: "/demo/index.html#decision", section: "Decision", preset: { outcome: "approved" } },
-      { id: "decision-error", title: "Decision, error", path: "/demo/index.html#decision", section: "Decision", preset: { outcome: "error" } },
+      { id: "case-study", title: "Case study", path: "/project/rentspree" },
+    ],
+  },
+  {
+    slug: "opendoor",
+    title: "Opendoor",
+    description: "Redesign of Opendoor’s seller experience: compare the two ways to sell, understand the offer, know what happens next.",
+    status: "done",
+    updated: "2026-11-10",
+    entry: "https://micahburger.com/project/opendoor",
+    repo: "https://github.com/micahburger/v2",
+    device: "desktop",
+    screens: [
+      { id: "case-study", title: "Case study", path: "/project/opendoor" },
+    ],
+  },
+  {
+    slug: "lincoln",
+    title: "Lincoln",
+    description: "Redesign of Lincoln’s Build and Price: configure and price a Lincoln on any screen.",
+    status: "done",
+    updated: "2026-11-11T16:58:52-05:00",
+    entry: "https://micahburger.com/project/lincoln",
+    repo: "https://github.com/micahburger/v2",
+    device: "desktop",
+    screens: [
+      { id: "case-study", title: "Case study", path: "/project/lincoln" },
+    ],
+  },
+  {
+    slug: "infinity",
+    title: "Infinity",
+    description: "Redesign of Carrier’s Infinity thermostat and app, designed together for homeowners.",
+    status: "done",
+    updated: "2026-11-11T16:58:52-05:00",
+    entry: "https://micahburger.com/project/infinity",
+    repo: "https://github.com/micahburger/v2",
+    device: "desktop",
+    screens: [
+      { id: "case-study", title: "Case study", path: "/project/infinity" },
+    ],
+  },
+  {
+    slug: "archive",
+    title: "Archive",
+    description: "Earlier work in one long read: Collins Aerospace, WWE, the American Bar Association, BBC News and Rockwell Group.",
+    status: "done",
+    updated: "2026-11-11T21:43:27-05:00",
+    entry: "https://micahburger.com/project/archive",
+    repo: "https://github.com/micahburger/v2",
+    device: "desktop",
+    // The old /project/wwe, /bbc, /rockwell, /aba and /fpo pages 301 to these
+    // anchors.
+    screens: [
+      { id: "archive", title: "Archive", path: "/project/archive" },
+      { id: "fpo", title: "Collins Aerospace", path: "/project/archive#fpo", section: "Projects" },
+      { id: "wwe", title: "WWE", path: "/project/archive#wwe", section: "Projects" },
+      { id: "aba", title: "American Bar Association", path: "/project/archive#aba", section: "Projects" },
+      { id: "bbc", title: "BBC News", path: "/project/archive#bbc", section: "Projects" },
+      { id: "rockwell", title: "Rockwell Group", path: "/project/archive#rockwell", section: "Projects" },
     ],
   },
 ];
