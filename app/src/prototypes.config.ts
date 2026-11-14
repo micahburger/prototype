@@ -192,22 +192,25 @@ const prototypes: Prototype[] = [
   {
     slug: "micahburger",
     title: "micahburger.com",
-    description: "The main portfolio — Semplice on WordPress.",
+    description: "The main portfolio, rebuilt from Semplice — every case study, plus an archive of the older work.",
     status: "done",
-    updated: "2025-07-15",
+    // v2 replaced the WordPress site on 2026-11-13 (v2.micahburger.com now
+    // 301s here). The rebuild lives in the v2 repo.
+    updated: "2026-11-13T19:03:45-05:00",
     entry: "https://micahburger.com/",
+    repo: "https://github.com/micahburger/v2",
     device: "desktop",
-    // WordPress is view-only here: there's no page to add the helper to short
-    // of a Semplice custom-code block.
+    // View-only until v2 loads /helper/protostate.js. Paths are v2's routes
+    // (sitemap.xml). WWE, BBC, Rockwell, ABA and FPO are no longer their own
+    // pages: their old URLs 301 to /project/archive#<slug>.
     screens: [
       { id: "home", title: "Home", path: "/" },
-      { id: "opendoor", title: "Opendoor", path: "/project/opendoor", section: "Projects" },
-      { id: "aba", title: "ABA", path: "/project/aba", section: "Projects" },
-      { id: "bbc", title: "BBC", path: "/project/bbc", section: "Projects" },
-      { id: "infinity", title: "Infinity", path: "/project/infinity", section: "Projects" },
-      { id: "lincoln", title: "Lincoln", path: "/project/lincoln", section: "Projects" },
-      { id: "rockwell", title: "Rockwell", path: "/project/rockwell", section: "Projects" },
-      { id: "wwe", title: "WWE", path: "/project/wwe", section: "Projects" },
+      { id: "rentspree", title: "RentSpree", path: "/project/rentspree", section: "Case studies" },
+      { id: "applicant-experience", title: "Applicant experience", path: "/project/applicant-experience/", section: "Case studies" },
+      { id: "opendoor", title: "Opendoor", path: "/project/opendoor", section: "Case studies" },
+      { id: "lincoln", title: "Lincoln", path: "/project/lincoln", section: "Case studies" },
+      { id: "infinity", title: "Infinity", path: "/project/infinity", section: "Case studies" },
+      { id: "archive", title: "Archive — WWE, BBC, Rockwell, ABA, FPO", path: "/project/archive", section: "Archive" },
     ],
   },
   {
