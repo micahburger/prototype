@@ -4,7 +4,6 @@ import {
   MODE_WIDTH,
   WIDTH_VIEWPORTS,
   allGroups,
-  deviceOf,
   frameSrc,
   fullState,
   galleryHref,
@@ -56,10 +55,13 @@ export function Viewer({ proto }: { proto: Prototype }) {
   const sameOrigin = isSameOrigin(proto);
 
   const modeParam = parseMode(params.get("mode"));
-  // With no mode in the URL, open at the prototype's own size: a desktop
-  // site in a phone frame is a squeeze you'd switch out of every time. A
+  // With no mode in the URL, open at the prototype's own size, framed: a
+  // desktop site in a phone frame is a squeeze you'd switch out of every
+  // time. Desktop prototypes used to open straight into full screen, but
+  // arriving from the index you want the viewer's chrome (mode switch, states
+  // panel) in reach, so they open in the desktop frame and F goes full. A
   // phone-sized window is full screen regardless — there's no room for a frame.
-  const mode: ViewerMode = modeParam ?? (isPhoneWindow || deviceOf(proto) === "desktop" ? "full" : "phone");
+  const mode: ViewerMode = modeParam ?? (isPhoneWindow ? "full" : homeMode(proto));
   // Where leaving full screen goes back to: the last framed width seen,
   // else the prototype's own.
   const lastFrame = useRef<FrameMode>(mode === "full" ? homeMode(proto) : mode);
